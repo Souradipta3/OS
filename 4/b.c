@@ -1,59 +1,61 @@
 #include <stdio.h>
 
-int main() {
-    int n, i, time = 0, remaining, quantum;
-    printf("Enter the number of processes: ");
-    scanf("%d", &n);
+void roundRobin(int processes[], int n, int burst_time[], int time_quantum) {
+    int waiting_time[n], turnaround_time[n], remaining_time[n];
+    int time = 0, completed = 0;
 
-    int burst_time[n], remaining_time[n], waiting_time[n], turnaround_time[n];
-
-    printf("Enter burst times for each process:\n");
-    for (i = 0; i < n; i++) {
-        printf("Process %d: ", i + 1);
-        scanf("%d", &burst_time[i]);
+    for (int i = 0; i < n; i++) {
         remaining_time[i] = burst_time[i];
     }
 
-    printf("Enter time quantum: ");
-    scanf("%d", &quantum);
-
-    remaining = n;
-
-    while (remaining > 0) {
-        for (i = 0; i < n; i++) {
+    while (completed < n) {
+        for (int i = 0; i < n; i++) {
             if (remaining_time[i] > 0) {
-                if (remaining_time[i] > quantum) {
-                    time += quantum;
-                    remaining_time[i] -= quantum;
-                } else {
+                if (remaining_time[i] <= time_quantum) {
+                    
                     time += remaining_time[i];
-                    waiting_time[i] = time - burst_time[i];
                     remaining_time[i] = 0;
-                    remaining--;
+                    waiting_time[i] = time - burst_time[i];
+                    turnaround_time[i] = time;
+                    completed++;
+                } else {
+                    
+                    time += time_quantum;
+                    remaining_time[i] -= time_quantum;
                 }
             }
         }
     }
 
-    for (i = 0; i < n; i++) {
-        turnaround_time[i] = waiting_time[i] + burst_time[i];
+    printf("PId\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    float total_waiting_time = 0, total_turnaround_time = 0;
+    for (int i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\t\t%d\n", processes[i], burst_time[i], waiting_time[i], turnaround_time[i]);
+        total_waiting_time += waiting_time[i];
+        total_turnaround_time += turnaround_time[i];
     }
 
-    printf("\nProcess\tBurst Time\tWaiting Time\tTurnaround Time\n");
-    for (i = 0; i < n; i++) {
-        printf("P%d\t%d\t\t%d\t\t%d\n", i + 1, burst_time[i], waiting_time[i], turnaround_time[i]);
+    printf("Average Waiting Time: %.2f\n", total_waiting_time / n);
+    printf("Average Turnaround Time: %.2f\n", total_turnaround_time / n);
+}
+
+int main() {
+    int n, time_quantum;
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &n);
+
+    int processes[n], burst_time[n];
+    for (int i = 0; i < n; i++) {
+        processes[i] = i + 1;
+        printf("Enter burst time for process P%d: ", i + 1);
+        scanf("%d", &burst_time[i]);
     }
 
-    float avg_wait = 0, avg_turnaround = 0;
-    for (i = 0; i < n; i++) {
-        avg_wait += waiting_time[i];
-        avg_turnaround += turnaround_time[i];
-    }
-    avg_wait /= n;
-    avg_turnaround /= n;
+    printf("Enter time quantum: ");
+    scanf("%d", &time_quantum);
 
-    printf("\nAverage Waiting Time: %.2f", avg_wait);
-    printf("\nAverage Turnaround Time: %.2f\n", avg_turnaround);
+    roundRobin(processes, n, burst_time, time_quantum);
 
     return 0;
 }
