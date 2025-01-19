@@ -1,79 +1,97 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <unistd.h>
 
-sem_t write_lock;
-pthread_mutex_t mutex;
-int reader_count = 0;
+sem_t rw_mutex;  
+sem_t mutex;     
+int read_count = 0;  
 
-void *reader(void *arg) {
-    int id = *((int *)arg);
+void* reader(void* arg) {
+    int id = *(int*)arg; 
 
-    pthread_mutex_lock(&mutex);
-    reader_count++;
-    if (reader_count == 1) {
-        sem_wait(&write_lock);
+    sem_wait(&mutex);
+    read_count++;
+    if (read_count == 1) { 
+        sem_wait(&rw_mutex);
     }
-    pthread_mutex_unlock(&mutex);
+    sem_post(&mutex);
 
-    printf("Reader %d is reading.\n", id);
-    sleep(1);
+    printf("Reader %d is in the critical section.\n", id);
 
-    pthread_mutex_lock(&mutex);
-    reader_count--;
-    if (reader_count == 0) {
-        sem_post(&write_lock);
+    sem_wait(&mutex);
+    read_count--;
+    if (read_count == 0) {  
+        sem_post(&rw_mutex);
     }
-    pthread_mutex_unlock(&mutex);
+    sem_post(&mutex);
 
+    printf("Reader %d has left the critical section.\n", id);
     return NULL;
 }
 
-void *writer(void *arg) {
-    int id = *((int *)arg);
+void* writer(void* arg) {
+    int id = *(int*)arg;  
 
-    sem_wait(&write_lock);
-    printf("Writer %d is writing.\n", id);
-    sleep(2);
-    sem_post(&write_lock);
+    sem_wait(&rw_mutex);
 
+    printf("Writer %d is in the critical section.\n", id);
+
+    sem_post(&rw_mutex);
+
+    printf("Writer %d has left the critical section.\n", id);
     return NULL;
 }
 
 int main() {
-    int num_readers, num_writers;
+    pthread_t readers[5], writers[5];
+    int ids[5];
 
-    printf("Enter the number of readers: ");
-    scanf("%d", &num_readers);
-    printf("Enter the number of writers: ");
-    scanf("%d", &num_writers);
+    sem_init(&rw_mutex, 0, 1);  
+    sem_init(&mutex, 0, 1);     
 
-    pthread_t readers[num_readers], writers[num_writers];
-    int ids[num_readers > num_writers ? num_readers : num_writers];
-
-    sem_init(&write_lock, 0, 1);
-    pthread_mutex_init(&mutex, NULL);
-
-    for (int i = 0; i < num_readers; i++) {
+    for (int i = 0; i < 5; i++) {
         ids[i] = i + 1;
-        pthread_create(&readers[i], NULL, reader, &ids[i]);
     }
 
-    for (int i = 0; i < num_writers; i++) {
-        ids[i] = i + 1;
-        pthread_create(&writers[i], NULL, writer, &ids[i]);
-    }
+    int choice, id;
+    while (1) {
+        printf("\n1. Reader enters\n2. Writer enters\n3. Exit\nEnter your choice: ");
+        scanf("%d", &choice);
 
-    for (int i = 0; i < num_readers; i++) {
-        pthread_join(readers[i], NULL);
-    }
-    for (int i = 0; i < num_writers; i++) {
-        pthread_join(writers[i], NULL);
-    }
+        switch (choice) {
+            case 1:
+                printf("Enter Reader ID (1-5): ");
+                scanf("%d", &id);
+                if (id >= 1 && id <= 5) {
+                    pthread_create(&readers[id - 1], NULL, reader, &ids[id - 1]);
+                    pthread_join(readers[id - 1], NULL);
+                } else {
+                    printf("Invalid Reader ID.\n");
+                }
+                break;
 
-    sem_destroy(&write_lock);
-    pthread_mutex_destroy(&mutex);
+            case 2:
+                printf("Enter Writer ID (1-5): ");
+                scanf("%d", &id);
+                if (id >= 1 && id <= 5) {
+                    pthread_create(&writers[id - 1], NULL, writer, &ids[id - 1]);
+                    pthread_join(writers[id - 1], NULL);
+                } else {
+                    printf("Invalid Writer ID.\n");
+                }
+                break;
+
+            case 3:
+                printf("Exiting program.\n");
+                sem_destroy(&rw_mutex);
+                sem_destroy(&mutex);
+                exit(0);
+
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
 
     return 0;
 }
