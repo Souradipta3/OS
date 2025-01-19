@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define MAX 10
+#define MAX 10 
 
 int allocation[MAX][MAX], max[MAX][MAX], need[MAX][MAX], available[MAX];
 int safeSequence[MAX];
-int n, m;
+int n, m; 
 
 void calculateNeed() {
     for (int i = 0; i < n; i++) {
