@@ -1,5 +1,4 @@
-1.
-A. Write a shell script to find out the reverse of a number.
+1. A. Write a shell script to find out the reverse of a number.
 B. Write a c program to implement FCFS scheduling algorithm. (Assume all the processes arrive at time zero)
 ____________________________________________________________________________________________
 
