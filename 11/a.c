@@ -1,63 +1,42 @@
 #include <stdio.h>
 #include <pthread.h>
-#include <stdlib.h>
 
-typedef struct {
-    int input;
-    long long result;
-} FactorialData;
+int factorial_result = 1, reverse_result = 0;
+int number; 
 
-typedef struct {
-    int input;
-    int result;
-} ReverseData;
-
-void *calculateFactorial(void *arg) {
-    FactorialData *data = (FactorialData *)arg;
-    int num = data->input;
-    data->result = 1;
-    for (int i = 1; i <= num; i++) {
-        data->result *= i;
+void *calculate_factorial(void *arg) {
+    int n = *((int *)arg);
+    factorial_result = 1;
+    for (int i = 1; i <= n; i++) {
+        factorial_result *= i;
     }
-    pthread_exit(NULL);
+    pthread_exit(0);
 }
 
-void *calculateReverse(void *arg) {
-    ReverseData *data = (ReverseData *)arg;
-    int num = data->input;
-    data->result = 0;
-    while (num > 0) {
-        data->result = data->result * 10 + num % 10;
-        num /= 10;
+void *calculate_reverse(void *arg) {
+    int n = *((int *)arg);
+    reverse_result = 0;
+    while (n > 0) {
+        reverse_result = reverse_result * 10 + (n % 10);
+        n /= 10;
     }
-    pthread_exit(NULL);
+    pthread_exit(0);
 }
 
 int main() {
     pthread_t thread1, thread2;
-    FactorialData factData;
-    ReverseData revData;
 
-    printf("Enter a number to calculate factorial: ");
-    scanf("%d", &factData.input);
-    printf("Enter a number to find reverse: ");
-    scanf("%d", &revData.input);
+    printf("Enter a number: ");
+    scanf("%d", &number);
 
-    if (pthread_create(&thread1, NULL, calculateFactorial, &factData) != 0) {
-        perror("Error creating thread for factorial");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pthread_create(&thread2, NULL, calculateReverse, &revData) != 0) {
-        perror("Error creating thread for reverse");
-        exit(EXIT_FAILURE);
-    }
+    pthread_create(&thread1, NULL, calculate_factorial, &number);
+    pthread_create(&thread2, NULL, calculate_reverse, &number);
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
 
-    printf("\nFactorial of %d is: %lld\n", factData.input, factData.result);
-    printf("Reverse of %d is: %d\n", revData.input, revData.result);
+    printf("Factorial of %d is %d\n", number, factorial_result);
+    printf("Reverse of %d is %d\n", number, reverse_result);
 
     return 0;
 }
