@@ -21,15 +21,13 @@ int main() {
     }
 
     if (pid == 0) {
-        // Child process
-        close(pipe_fd[1]); // Close unused write end
-        read(pipe_fd[0], read_msg, sizeof(read_msg)); // Read from pipe
+        close(pipe_fd[1]);
+        read(pipe_fd[0], read_msg, sizeof(read_msg));
         printf("Child received: %s\n", read_msg);
         close(pipe_fd[0]);
     } else {
-        // Parent process
-        close(pipe_fd[0]); // Close unused read end
-        write(pipe_fd[1], write_msg, strlen(write_msg) + 1); // Write to pipe
+        close(pipe_fd[0]);
+        write(pipe_fd[1], write_msg, strlen(write_msg) + 1);
         close(pipe_fd[1]);
     }
 
